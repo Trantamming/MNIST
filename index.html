@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwriting Recognition</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+</head>
+<body>
+    <h1>Handwriting Recognition</h1>
+    <canvas id="canvas" width="280" height="280" style="border:1px solid black;"></canvas>
+    <button onclick="clearCanvas()">Clear</button>
+    <button onclick="predict()">Predict</button>
+    <p id="prediction">Prediction: </p>
+    
+    <script>
+        let model;
+
+        async function loadModel() {
+            model = await tf.loadLayersModel('https://github.com/Trantamming/MNIST/blob/main/mnist_tfjs_model/model.json');
+            console.log("Model Loaded");
+        }
+
+        loadModel();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+
+        canvas.addEventListener('mousedown', () => drawing = true);
+        canvas.addEventListener('mouseup', () => drawing = false);
+        canvas.addEventListener('mousemove', draw);
+
+        function draw(event) {
+            if (!drawing) return;
+            ctx.fillStyle = 'black';
+            ctx.fillRect(event.offsetX, event.offsetY, 10, 10);
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        async function predict() {
+            if (!model) {
+                alert("Model is not loaded yet!");
+                return;
+            }
+            let image = tf.browser.fromPixels(canvas, 1).resizeBilinear([28, 28]).toFloat().div(255).expandDims(0);
+            let prediction = model.predict(image);
+            let predictedNumber = prediction.argMax(1).dataSync()[0];
+            document.getElementById('prediction').innerText = `Prediction: ${predictedNumber}`;
+        }
+    </script>
+</body>
+</html>
